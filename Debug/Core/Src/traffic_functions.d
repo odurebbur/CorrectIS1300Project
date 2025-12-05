@@ -30,7 +30,7 @@ Core/Src/traffic_functions.o: ../Core/Src/traffic_functions.c \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h \
  ../Core/Inc/Traffic.h ../Core/Inc/traffic_functions.h \
- ../Core/Inc/traffic.h
+ ../Core/Inc/traffic.h ../Core/Inc/spi.h ../Core/Inc/main.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -65,3 +65,5 @@ Core/Src/traffic_functions.o: ../Core/Src/traffic_functions.c \
 ../Core/Inc/Traffic.h:
 ../Core/Inc/traffic_functions.h:
 ../Core/Inc/traffic.h:
+../Core/Inc/spi.h:
+../Core/Inc/main.h:

@@ -91,6 +91,13 @@ const osThreadAttr_t blinkTaskHandle_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for OLHandlerTask */
+osThreadId_t OLHandlerTaskHandle;
+const osThreadAttr_t OLHandlerTask_attributes = {
+  .name = "OLHandlerTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -102,6 +109,7 @@ void TLHandler(void *argument);
 void PLHandler(void *argument);
 void InHandler(void *argument);
 void blinkTask(void *argument);
+void OLHandler(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -116,6 +124,9 @@ void MX_FREERTOS_Init(void) {
   doBlink1 = false;
   doBlink2 = false;
   blinkState = false;
+
+  HAL_GPIO_WritePin(SR_Reset_GPIO_Port, SR_Reset_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SR_Enable_GPIO_Port, SR_Enable_Pin, GPIO_PIN_RESET);
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -150,6 +161,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of blinkTaskHandle */
   blinkTaskHandleHandle = osThreadNew(blinkTask, NULL, &blinkTaskHandle_attributes);
+
+  /* creation of OLHandlerTask */
+  OLHandlerTaskHandle = osThreadNew(OLHandler, NULL, &OLHandlerTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -188,7 +202,6 @@ void StartDefaultTask(void *argument)
 /* USER CODE END Header_TLHandler */
 void TLHandler(void *argument)
 {
-  // TODO: To keep green, use xEventGroupGetBits and make next state same green again
   /* USER CODE BEGIN TLHandler */
   /* Infinite loop */
 	static states State, NextState;
@@ -401,6 +414,24 @@ void blinkTask(void *argument)
     vTaskDelay(toggleFreq);
   }
   /* USER CODE END blinkTask */
+}
+
+/* USER CODE BEGIN Header_OLHandler */
+/**
+* @brief Function implementing the OLHandlerTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_OLHandler */
+void OLHandler(void *argument)
+{
+  /* USER CODE BEGIN OLHandler */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END OLHandler */
 }
 
 /* Private application code --------------------------------------------------*/
