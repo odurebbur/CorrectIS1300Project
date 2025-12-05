@@ -2,6 +2,7 @@
 #include "traffic_functions.h"
 #include "traffic.h"
 #include <spi.h>
+#include <stdlib.h>
 
 void Send_Instruction(uint32_t instruction) {
     /* Make sure Reset and Enable are set to HIGH and LOW respectively */
@@ -38,3 +39,4 @@ uint32_t update_instruction(uint32_t current_instruction, uint32_t instruction, 
     Send_Instruction(current_instruction);
     return current_instruction;
 }
+

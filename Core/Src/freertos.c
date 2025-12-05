@@ -30,6 +30,7 @@
 #include "Test.h"
 #include "traffic_functions.h"
 #include "semphr.h"
+#include "oled_functions.h"
 
 /* USER CODE END Includes */
 
@@ -50,11 +51,16 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+
 EventGroupHandle_t eventGroup;
+EventGroupHandle_t oledEventGroup;
 uint32_t current_instruction;
 bool doBlink1, doBlink2;
 bool blinkState;
 SemaphoreHandle_t lightMutex;
+SemaphoreHandle_t oledMutex;
+oledBarStruct oledBars[NUM_BARS];
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -95,8 +101,8 @@ const osThreadAttr_t blinkTaskHandle_attributes = {
 osThreadId_t OLHandlerTaskHandle;
 const osThreadAttr_t OLHandlerTask_attributes = {
   .name = "OLHandlerTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,17 +127,29 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
   eventGroup = xEventGroupCreate();
+  oledEventGroup = xEventGroupCreate();
   doBlink1 = false;
   doBlink2 = false;
   blinkState = false;
+  
 
   HAL_GPIO_WritePin(SR_Reset_GPIO_Port, SR_Reset_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(SR_Enable_GPIO_Port, SR_Enable_Pin, GPIO_PIN_RESET);
+
+  //init bars
+  for(int i = 0; i < NUM_BARS; i++) {
+      oledBars[i].startTick = 0;
+      oledBars[i].durationTick = 0;
+      oledBars[i].active = 0;
+  }
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
+
   lightMutex = xSemaphoreCreateMutex();
+  oledMutex = xSemaphoreCreateMutex();
+
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -212,7 +230,7 @@ void TLHandler(void *argument)
     uint32_t instruction, elapsedTime;
     bool toGreen = false; // decide whether to go from yellow to red or yellow to green 
     EventBits_t receivedBits;
-    TickType_t xStartTimer, xEndTimer, elapsedTicks;
+    TickType_t xStartTimer, xEndTimer;
     instruction = PL1_Green | PL2_Red;
     current_instruction = update_instruction(current_instruction, instruction, PL);
     while (1) {
@@ -221,6 +239,8 @@ void TLHandler(void *argument)
         case NSG_EWR:
             instruction = TL_NS_Green | TL_EW_Red;
             current_instruction = update_instruction(current_instruction, instruction, TL);
+            startBar(G1, greenDelay);
+            stopBar(R1);
             // check if the PL2 is pressed, or there is a car by TL1 or TL3
             xStartTimer = xTaskGetTickCount();
             receivedBits = xEventGroupWaitBits(eventGroup, Event_PL2 | Event_TL1_Switch | Event_TL3_Switch | Event_TL2_Switch | Event_TL4_Switch | Event_PL2_Pressed_Yellow, pdTRUE, pdFALSE, greenDelay);
@@ -228,11 +248,14 @@ void TLHandler(void *argument)
             elapsedTime = xEndTimer - xStartTimer;
             if(receivedBits & Event_PL2 || receivedBits & Event_PL2_Pressed_Yellow) {
               doBlink2 = true;
+              startBar(P2, pedestrianDelay);
               vTaskDelay(greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay);
             } else if((receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch) && !(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch)) {
               NextState = NSG_EWR;
               break;
-            } else if(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch ) {
+            } else if(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch) {
+              startBar(R2, redDelayMax);
+              //stopBar(G1); If green should disappear from screen when redDelay toggles instead
               vTaskDelay(greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax);
             }
             NextState = NSY_EWR;
@@ -242,6 +265,8 @@ void TLHandler(void *argument)
             instruction = TL_NS_Yellow | TL_EW_Red;
             current_instruction = update_instruction(current_instruction, instruction, TL);
             if (toGreen) {
+              startBar(R2, redDelayMax);
+              stopBar(G2);
               xStartTimer = xTaskGetTickCount();
               receivedBits = xEventGroupWaitBits(eventGroup, Event_PL2, pdTRUE, pdFALSE, yellowDelay);
               xEndTimer = xTaskGetTickCount();
@@ -265,6 +290,7 @@ void TLHandler(void *argument)
             instruction = TL_NS_Red | TL_EW_Yellow;
             current_instruction = update_instruction(current_instruction, instruction, TL);
             if (toGreen) {
+              stopBar(G1);
               xStartTimer = xTaskGetTickCount();
               receivedBits = xEventGroupWaitBits(eventGroup, Event_PL1, pdTRUE, pdFALSE, yellowDelay);
               xEndTimer = xTaskGetTickCount();
@@ -287,6 +313,8 @@ void TLHandler(void *argument)
         case NSR_EWG:
             instruction = TL_NS_Red | TL_EW_Green;
             current_instruction = update_instruction(current_instruction, instruction, TL);
+            startBar(G2, greenDelay);
+            stopBar(R2);
             xStartTimer = xTaskGetTickCount();
             receivedBits = xEventGroupWaitBits(eventGroup, Event_PL1 | Event_TL1_Switch | Event_TL3_Switch | Event_TL2_Switch | Event_TL4_Switch | Event_PL1_Pressed_Yellow, pdTRUE, pdFALSE, greenDelay);
             xEndTimer = xTaskGetTickCount();
@@ -294,11 +322,14 @@ void TLHandler(void *argument)
 
             if(receivedBits & Event_PL1 || receivedBits & Event_PL1_Pressed_Yellow) {
               doBlink1 = true;
+              startBar(P1, pedestrianDelay);
               vTaskDelay(greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay);
             } else if((receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch) && !(receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch)) {
               NextState = NSR_EWG;
               break;
             } else if(receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch ) {
+              startBar(R1, redDelayMax);
+              //stopBar(G2); If greenDelay should disappear when redDelay is used
               vTaskDelay(greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax);
             }
             toGreen = false;
@@ -323,7 +354,6 @@ void PLHandler(void *argument)
   /* USER CODE BEGIN PLHandler */
 
   /* Infinite loop */
-  static pedStates State, NextState;
   EventBits_t receivedBits;
   uint32_t instruction;
   for(;;)
@@ -333,10 +363,12 @@ void PLHandler(void *argument)
       if(receivedBits & Event_NS_Safe_Walk) {
     	  instruction = PL1_Green | PL2_Red;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
+        stopBar(P1);
       }
       if(receivedBits & Event_EW_Safe_Walk) {
     	  instruction = PL1_Red | PL2_Green;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
+        stopBar(P2);
       }
 
   }
@@ -427,9 +459,44 @@ void OLHandler(void *argument)
 {
   /* USER CODE BEGIN OLHandler */
   /* Infinite loop */
+  uint8_t screenArray[NUM_BARS];
+  drawTitles();
+  drawBarOutlines();
+  
   for(;;)
   {
-    osDelay(1);
+    TickType_t current = xTaskGetTickCount();
+    xSemaphoreTake(oledMutex, portMAX_DELAY);
+    for(int i = 0; i < NUM_BARS; i++) {
+      if(oledBars[i].active == 0) {
+        screenArray[i] = BAR_Y1; // bar empty
+        continue;
+      }
+
+      TickType_t start  = oledBars[i].startTick;
+      TickType_t total  = oledBars[i].durationTick;
+      TickType_t elapsed = current - start;
+
+      if(elapsed >= total) {
+        oledBars[i].active = 0;
+        screenArray[i] = BAR_Y1;
+        continue;
+      }
+
+      float barRatio = 1.0f - ((float)elapsed / (float)total);
+      if(barRatio < 0.0f) barRatio = 0.0f;
+      if(barRatio > 1.0f) barRatio = 1.0f;
+
+      uint8_t top = BAR_Y1 - (uint8_t)((barRatio * MAX_BAR_HEIGHT));
+
+      if(top < BAR_Y2) top = BAR_Y2;
+      if(top > BAR_Y1) top = BAR_Y1;
+
+      screenArray[i] = top;
+    }
+    xSemaphoreGive(oledMutex);
+    drawBars(screenArray);
+    osDelay(20);
   }
   /* USER CODE END OLHandler */
 }

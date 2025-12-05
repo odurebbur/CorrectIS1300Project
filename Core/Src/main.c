@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ssd1306.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -98,7 +98,9 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-
+  ssd1306_Init();
+  //ssd1306_Fill(White);
+  //ssd1306_UpdateScreen();
 #ifdef RUN_TEST_PROGRAM
   Test_program();
 #else
