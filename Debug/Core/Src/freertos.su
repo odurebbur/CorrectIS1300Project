@@ -1,0 +1,6 @@
+../Core/Src/freertos.c:113:6:MX_FREERTOS_Init	8	static
+../Core/Src/freertos.c:171:6:StartDefaultTask	16	static
+../Core/Src/freertos.c:189:6:TLHandler	48	static
+../Core/Src/freertos.c:308:6:PLHandler	32	static
+../Core/Src/freertos.c:340:6:InHandler	16	static
+../Core/Src/freertos.c:388:6:blinkTask	24	static

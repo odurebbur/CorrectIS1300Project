@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.tsx": "typescriptreact",
+        "main.h": "c",
+        "traffic_functions.h": "c"
+    }
+}

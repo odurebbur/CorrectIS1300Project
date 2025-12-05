@@ -1,0 +1,3 @@
+../Core/Src/test.c:10:6:Test_program	8	static
+../Core/Src/test.c:14:6:Test_Leds	16	static
+../Core/Src/test.c:25:6:Test_EventGroup	16	static
