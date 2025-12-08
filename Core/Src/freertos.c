@@ -227,10 +227,10 @@ void TLHandler(void *argument)
   {
     State = NSG_EWR;
     NextState = NSG_EWR;
-    uint32_t instruction, elapsedTime;
-    bool toGreen = false; // decide whether to go from yellow to red or yellow to green 
+    uint32_t instruction, elapsedTime, elapsedTime2;
+    bool toGreen = false, firstRound  = true; // decide whether to go from yellow to red or yellow to green 
     EventBits_t receivedBits;
-    TickType_t xStartTimer, xEndTimer;
+    TickType_t xStartTimer, xEndTimer, timeToDelay;
     instruction = PL1_Green | PL2_Red;
     current_instruction = update_instruction(current_instruction, instruction, PL);
     while (1) {
@@ -240,6 +240,9 @@ void TLHandler(void *argument)
             instruction = TL_NS_Green | TL_EW_Red;
             current_instruction = update_instruction(current_instruction, instruction, TL);
             startBar(G1, greenDelay);
+            if (firstRound) {
+              startBar(W1, walkingDelay);
+            }
             stopBar(R1);
             // check if the PL2 is pressed, or there is a car by TL1 or TL3
             xStartTimer = xTaskGetTickCount();
@@ -247,17 +250,41 @@ void TLHandler(void *argument)
             xEndTimer = xTaskGetTickCount();
             elapsedTime = xEndTimer - xStartTimer;
             if(receivedBits & Event_PL2 || receivedBits & Event_PL2_Pressed_Yellow) {
-              doBlink2 = true;
-              startBar(P2, pedestrianDelay);
-              vTaskDelay(greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay);
+              //doBlink2 = true;
+              //startBar(P2, pedestrianDelay);
+              timeToDelay = greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay;
+              if (elapsedTime < walkingDelay && firstRound) timeToDelay = walkingDelay - elapsedTime;
+              vTaskDelay(timeToDelay);
             } else if((receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch) && !(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch)) {
               NextState = NSG_EWR;
+              if (elapsedTime > walkingDelay) stopBar(W1);
+              firstRound = false;
               break;
             } else if(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch) {
+              if(!(receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch)) {
+                if(!firstRound) {
+                  toGreen = false;
+                  NextState = NSY_EWR;
+                  startBar(R2, redDelayMax);
+                  xStartTimer = xTaskGetTickCount();
+                  receivedBits = xEventGroupWaitBits(eventGroup, Event_PL2, pdFALSE, pdFALSE, redDelayMax);
+                  if (receivedBits & Event_PL2) {
+                    xEndTimer = xTaskGetTickCount();
+                    elapsedTime = xEndTimer - xStartTimer;
+                    //doBlink2 = true;
+                    startBar(P2, pedestrianDelay);
+                    vTaskDelay(redDelayMax - elapsedTime);
+                  }
+                  break;
+                } 
+              }
               startBar(R2, redDelayMax);
-              //stopBar(G1); If green should disappear from screen when redDelay toggles instead
-              vTaskDelay(greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax);
+              stopBar(G1);
+              timeToDelay = greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax;
+              if (elapsedTime < walkingDelay && firstRound) timeToDelay = walkingDelay - elapsedTime;
+              vTaskDelay(timeToDelay);
             }
+            firstRound = false;
             NextState = NSY_EWR;
             toGreen = false;
             break;
@@ -272,7 +299,7 @@ void TLHandler(void *argument)
               xEndTimer = xTaskGetTickCount();
               elapsedTime = xEndTimer - xStartTimer;
               if(receivedBits & Event_PL2) {
-                doBlink2 = true;
+                //doBlink2 = true;
                 xEventGroupSetBits(eventGroup, Event_PL2_Pressed_Yellow);
                 vTaskDelay(yellowDelay - elapsedTime);
               }
@@ -285,6 +312,7 @@ void TLHandler(void *argument)
               current_instruction = update_instruction(current_instruction, 0, PLB);
             }
             toGreen = true;
+            firstRound = true;
             break;
         case NSR_EWY:
             instruction = TL_NS_Red | TL_EW_Yellow;
@@ -296,7 +324,7 @@ void TLHandler(void *argument)
               xEndTimer = xTaskGetTickCount();
               elapsedTime = xEndTimer - xStartTimer;
               if(receivedBits & Event_PL1) {
-                doBlink1 = true;
+                //doBlink1 = true;
                 xEventGroupSetBits(eventGroup, Event_PL1_Pressed_Yellow);
                 vTaskDelay(yellowDelay - elapsedTime);
               }
@@ -309,11 +337,15 @@ void TLHandler(void *argument)
               current_instruction = update_instruction(current_instruction, 0, PLB);
             }
             toGreen = true;
+            firstRound = true;
             break;
         case NSR_EWG:
             instruction = TL_NS_Red | TL_EW_Green;
             current_instruction = update_instruction(current_instruction, instruction, TL);
             startBar(G2, greenDelay);
+            if (firstRound) {
+              startBar(W2, walkingDelay);
+            }
             stopBar(R2);
             xStartTimer = xTaskGetTickCount();
             receivedBits = xEventGroupWaitBits(eventGroup, Event_PL1 | Event_TL1_Switch | Event_TL3_Switch | Event_TL2_Switch | Event_TL4_Switch | Event_PL1_Pressed_Yellow, pdTRUE, pdFALSE, greenDelay);
@@ -321,18 +353,41 @@ void TLHandler(void *argument)
             elapsedTime = xEndTimer - xStartTimer;
 
             if(receivedBits & Event_PL1 || receivedBits & Event_PL1_Pressed_Yellow) {
-              doBlink1 = true;
+              //doBlink1 = true;
               startBar(P1, pedestrianDelay);
-              vTaskDelay(greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay);
+              timeToDelay = greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay;
+              if (elapsedTime < walkingDelay && firstRound) timeToDelay = walkingDelay - elapsedTime;
+              vTaskDelay(timeToDelay);
             } else if((receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch) && !(receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch)) {
               NextState = NSR_EWG;
+              firstRound = false;
               break;
             } else if(receivedBits & Event_TL2_Switch || receivedBits & Event_TL4_Switch ) {
+              if(!(receivedBits & Event_TL1_Switch || receivedBits & Event_TL3_Switch)) {
+                if(!firstRound) {
+                  toGreen = false;
+                  NextState = NSR_EWY;
+                  startBar(R1, redDelayMax);
+                  xStartTimer = xTaskGetTickCount();
+                  receivedBits = xEventGroupWaitBits(eventGroup, Event_PL1, pdFALSE, pdFALSE, redDelayMax);
+                  if (receivedBits & Event_PL1) {
+                    xEndTimer = xTaskGetTickCount();
+                    elapsedTime = xEndTimer - xStartTimer;
+                    //doBlink1 = true;
+                    startBar(P1, pedestrianDelay);
+                    vTaskDelay(redDelayMax - elapsedTime);
+                  }
+                  break;
+                }
+              }
               startBar(R1, redDelayMax);
-              //stopBar(G2); If greenDelay should disappear when redDelay is used
-              vTaskDelay(greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax);
+              stopBar(G2);
+              timeToDelay = greenDelay - elapsedTime < redDelayMax ? (greenDelay - elapsedTime) : redDelayMax;
+              if (elapsedTime < walkingDelay && firstRound) timeToDelay = walkingDelay - elapsedTime;
+              vTaskDelay(timeToDelay);
             }
             toGreen = false;
+            firstRound = false;
             NextState = NSR_EWY;
             break;
         }
@@ -359,16 +414,20 @@ void PLHandler(void *argument)
   for(;;)
   {
 
-	  receivedBits = xEventGroupWaitBits(eventGroup, Event_NS_Safe_Walk  | Event_EW_Safe_Walk, pdTRUE, pdFALSE, portMAX_DELAY);
+	  receivedBits = xEventGroupWaitBits(eventGroup, Event_NS_Safe_Walk  | Event_EW_Safe_Walk, pdFALSE, pdFALSE, portMAX_DELAY);
       if(receivedBits & Event_NS_Safe_Walk) {
     	  instruction = PL1_Green | PL2_Red;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P1);
+        vTaskDelay(walkingDelay);
+        xEventGroupClearBits(eventGroup, Event_NS_Safe_Walk);
       }
       if(receivedBits & Event_EW_Safe_Walk) {
-    	  instruction = PL1_Red | PL2_Green;
+        instruction = PL1_Red | PL2_Green;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P2);
+        vTaskDelay(walkingDelay);
+        xEventGroupClearBits(eventGroup, Event_EW_Safe_Walk);
       }
 
   }
@@ -390,11 +449,20 @@ void InHandler(void *argument)
   {
     if (HAL_GPIO_ReadPin(PL2_Switch_GPIO_Port, PL2_Switch_Pin) == GPIO_PIN_RESET) {
       xEventGroupSetBits(eventGroup, Event_PL2);
+    //add a mutex 
+      if(current_instruction & PL2_Red) {
+        if(!doBlink2) startBar(P2, pedestrianDelay);
+        doBlink2 = true;
+      }
 	  } else {
       xEventGroupClearBits(eventGroup, Event_PL2);
     }
     if(HAL_GPIO_ReadPin(PL1_Switch_GPIO_Port, PL1_Switch_Pin) == GPIO_PIN_RESET) {
       xEventGroupSetBits(eventGroup, Event_PL1);
+      if(current_instruction & PL1_Red) {
+        if (!doBlink1) startBar(P1, pedestrianDelay);
+        doBlink1 = true;
+      }
     } else {
       xEventGroupClearBits(eventGroup, Event_PL1);
     }

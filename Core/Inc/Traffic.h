@@ -54,10 +54,10 @@ typedef enum {
 
 typedef enum {
     yellowDelay = 2000,
-    greenDelay = 10000,
-    redDelayMax = 3000,
-    pedestrianDelay = 7000,
-    walkingDelay = 8000,
+    greenDelay = 15000,
+    redDelayMax = 2000,
+    pedestrianDelay = 8000,
+    walkingDelay = 5000,
     toggleFreq = 500
 } delays;
 
