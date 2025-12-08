@@ -134,7 +134,7 @@ void MX_FREERTOS_Init(void) {
   
 
   HAL_GPIO_WritePin(SR_Reset_GPIO_Port, SR_Reset_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(SR_Enable_GPIO_Port, SR_Enable_Pin, GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(SR_Enable_GPIO_Port, SR_Enable_Pin, GPIO_PIN_RESET);
 
   //init bars
   for(int i = 0; i < NUM_BARS; i++) {
