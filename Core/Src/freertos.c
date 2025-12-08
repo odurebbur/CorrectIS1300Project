@@ -371,14 +371,14 @@ void PLHandler(void *argument)
     	  instruction = PL1_Green | PL2_Red;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P1);
-        vTaskDelay(pedestrianDelay);
+        vTaskDelay(walkingDelay);
         xEventGroupClearBits(eventGroup, Event_NS_Safe_Walk);
       }
       if(receivedBits & Event_EW_Safe_Walk) {
     	  instruction = PL1_Red | PL2_Green;
     	  current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P2);
-        vTaskDelay(pedestrianDelay);
+        vTaskDelay(walkingDelay);
         xEventGroupClearBits(eventGroup, Event_EW_Safe_Walk);
       }
 
