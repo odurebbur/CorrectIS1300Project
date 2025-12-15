@@ -275,7 +275,6 @@ void TLHandler(void *argument)
                   if (receivedBits & Event_PL2) {
                     xEndTimer = xTaskGetTickCount();
                     elapsedTime = xEndTimer - xStartTimer;
-                    startBar(P2, pedestrianDelay);
                     vTaskDelay(redDelayMax - elapsedTime);
                   }
                   break;
@@ -358,8 +357,6 @@ void TLHandler(void *argument)
             elapsedTime = xEndTimer - xStartTimer;
 
             if(receivedBits & (Event_PL1 | Event_PL1_Pressed_Yellow)) {
-              //doBlink1 = true;
-              startBar(P1, pedestrianDelay);
               timeToDelay = greenDelay - elapsedTime < pedestrianDelay ? (greenDelay - elapsedTime) : pedestrianDelay - yellowDelay;
               if (elapsedTime < walkingDelay && firstRound) timeToDelay = walkingDelay - elapsedTime;
               vTaskDelay(timeToDelay);
@@ -421,15 +418,15 @@ void PLHandler(void *argument)
 
 	  receivedBits = xEventGroupWaitBits(eventGroup, Event_NS_Safe_Walk  | Event_EW_Safe_Walk, pdFALSE, pdFALSE, portMAX_DELAY);
       if(receivedBits & Event_NS_Safe_Walk) {
-    	instruction = PL1_Green | PL2_Red;
-    	current_instruction = update_instruction(current_instruction, instruction, PL);
+        instruction = PL1_Green | PL2_Red;
+        current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P1);
         vTaskDelay(walkingDelay);
         xEventGroupClearBits(eventGroup, Event_NS_Safe_Walk);
       }
       if(receivedBits & Event_EW_Safe_Walk) {
         instruction = PL1_Red | PL2_Green;
-    	current_instruction = update_instruction(current_instruction, instruction, PL);
+        current_instruction = update_instruction(current_instruction, instruction, PL);
         stopBar(P2);
         vTaskDelay(walkingDelay);
         xEventGroupClearBits(eventGroup, Event_EW_Safe_Walk);
@@ -495,7 +492,7 @@ void InHandler(void *argument)
     HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
     poti_value = HAL_ADC_GetValue(&hadc1);
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, poti_value);
-	vTaskDelay(10);
+    vTaskDelay(10);
   }
   /* USER CODE END InHandler */
 }
