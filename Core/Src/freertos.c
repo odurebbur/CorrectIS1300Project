@@ -394,7 +394,6 @@ void TLHandler(void *argument)
                   if (receivedBits & Event_PL1) {
                     xEndTimer = xTaskGetTickCount();
                     elapsedTime = xEndTimer - xStartTimer;
-                    startBar(P1, pedestrianDelay);
                     vTaskDelay(redDelayMax - elapsedTime);
                   }
                   break;
