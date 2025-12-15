@@ -8,6 +8,7 @@
 #ifndef INC_TRAFFIC_H_
 #define INC_TRAFFIC_H_
 
+
 #include <stdint.h>
 
 typedef enum {
@@ -52,21 +53,27 @@ typedef enum {
 } states;
 
 typedef enum {
-    // P1 = N/S P2 = E/W
-    P1G, // Ped 1 Green, Ped 2 Red
-    P2G // Ped 1 Red,Ped 2 Green
-} pedStates;
-
-typedef enum {
     yellowDelay = 2000,
-    greenDelay = 10000,
-    redDelayMax = 1000,
-    pedestrianDelay = 7000,
-    walkingDelay = 8000,
+    greenDelay = 15000,
+    redDelayMax = 2000,
+    pedestrianDelay = 8000,
+    walkingDelay = 5000,
     toggleFreq = 500
 } delays;
 
+typedef enum {
+    P1, 
+    W1,
+    P2, 
+    W2, 
+    G1, 
+    R1, 
+    G2, 
+    R2
+} bars;
+
 void Traffic(void);
+
 
 //extern uint32_t current_instruction;
 

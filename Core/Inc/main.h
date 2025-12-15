@@ -97,12 +97,8 @@ void Error_Handler(void);
 #define PL1_Switch_GPIO_Port GPIOA
 #define SR_SHCP_Pin GPIO_PIN_10
 #define SR_SHCP_GPIO_Port GPIOC
-#define UART_TX_Pin GPIO_PIN_12
-#define UART_TX_GPIO_Port GPIOC
-#define UART_RX_Pin GPIO_PIN_2
-#define UART_RX_GPIO_Port GPIOD
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
+#define Disp_CS_Pin GPIO_PIN_11
+#define Disp_CS_GPIO_Port GPIOC
 #define SR_DS_Pin GPIO_PIN_5
 #define SR_DS_GPIO_Port GPIOB
 #define Disp_Reset_Pin GPIO_PIN_6

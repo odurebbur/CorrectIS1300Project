@@ -1,22 +1,23 @@
 #include "main.h"
 #include "traffic_functions.h"
 #include "traffic.h"
+#include <spi.h>
+#include <stdlib.h>
 
 // send the isntruction to the shift register using SPI
 void Send_Instruction(uint32_t instruction) {
     /* Make sure Reset and Enable are set to HIGH and LOW respectively */
-    HAL_GPIO_WritePin(SR_Reset_GPIO_Port, SR_Reset_Pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(SR_Enable_GPIO_Port, SR_Enable_Pin, GPIO_PIN_RESET);
+    uint8_t *data = malloc(sizeof(uint8_t)*(3));
+    
+    data[0] = instruction;
+    data[1] = instruction >> 8;
+    data[2] = instruction >> 16;
 
-    for(int i = 0; i < 24; i++) {
-        bool lsb = instruction & 1;
-        HAL_GPIO_WritePin(SR_DS_GPIO_Port, SR_DS_Pin, lsb ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(SR_SHCP_GPIO_Port, SR_SHCP_Pin, GPIO_PIN_SET);
-        HAL_GPIO_WritePin(SR_SHCP_GPIO_Port, SR_SHCP_Pin, GPIO_PIN_RESET);
-        instruction = instruction >> 1;
-    }
+    HAL_SPI_Transmit(&hspi3, data, 3, HAL_MAX_DELAY);
+    
     HAL_GPIO_WritePin(SR_STCP_GPIO_Port, SR_STCP_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(SR_STCP_GPIO_Port, SR_STCP_Pin, GPIO_PIN_RESET);
+    free(data);
 }
 
 // updates the current instruction according to which light group should be midified, while keeping eveyrthing else the same
@@ -40,3 +41,4 @@ uint32_t update_instruction(uint32_t current_instruction, uint32_t instruction, 
     Send_Instruction(current_instruction);
     return current_instruction;
 }
+

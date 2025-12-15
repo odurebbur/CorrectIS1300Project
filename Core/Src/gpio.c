@@ -38,9 +38,6 @@
         * Output
         * EVENT_OUT
         * EXTI
-     PC12   ------> UART5_TX
-     PD2   ------> UART5_RX
-     PB6   ------> I2C1_SCL
 */
 void MX_GPIO_Init(void)
 {
@@ -52,13 +49,12 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, USR_LED1_Pin|SR_STCP_Pin|USR_LED2_Pin|SR_DS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, USR_LED1_Pin|SR_STCP_Pin|USR_LED2_Pin|Disp_Reset_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, SR_Enable_Pin|Disp_Data_Pin|SR_SHCP_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, Disp_Data_Pin|Disp_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SR_Reset_GPIO_Port, SR_Reset_Pin, GPIO_PIN_RESET);
@@ -75,14 +71,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(TL1_Car_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Poti_Pin */
-  GPIO_InitStruct.Pin = Poti_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Poti_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : USR_LED1_Pin SR_STCP_Pin USR_LED2_Pin SR_DS_Pin */
-  GPIO_InitStruct.Pin = USR_LED1_Pin|SR_STCP_Pin|USR_LED2_Pin|SR_DS_Pin;
+  /*Configure GPIO pins : USR_LED1_Pin SR_STCP_Pin USR_LED2_Pin Disp_Reset_Pin */
+  GPIO_InitStruct.Pin = USR_LED1_Pin|SR_STCP_Pin|USR_LED2_Pin|Disp_Reset_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -94,8 +84,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SR_Enable_Pin Disp_Data_Pin SR_SHCP_Pin */
-  GPIO_InitStruct.Pin = SR_Enable_Pin|Disp_Data_Pin|SR_SHCP_Pin;
+  /*Configure GPIO pins : Disp_Data_Pin Disp_CS_Pin */
+  GPIO_InitStruct.Pin = Disp_Data_Pin|Disp_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -113,30 +103,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : UART_TX_Pin */
-  GPIO_InitStruct.Pin = UART_TX_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF8_UART5;
-  HAL_GPIO_Init(UART_TX_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : UART_RX_Pin */
-  GPIO_InitStruct.Pin = UART_RX_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF8_UART5;
-  HAL_GPIO_Init(UART_RX_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : Disp_Reset_Pin */
-  GPIO_InitStruct.Pin = Disp_Reset_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
-  HAL_GPIO_Init(Disp_Reset_GPIO_Port, &GPIO_InitStruct);
 
 }
 
