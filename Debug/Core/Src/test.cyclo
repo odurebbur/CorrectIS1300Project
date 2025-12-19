@@ -1,4 +1,3 @@
 ../Core/Src/test.c:3:6:Test_program	1
 ../Core/Src/test.c:9:6:Test_Leds	2
-../Core/Src/test.c:21:6:Test_EventGroup	1
-../Core/Src/test.c:45:6:Test_OLED	9
+../Core/Src/test.c:21:6:Test_OLED	9
