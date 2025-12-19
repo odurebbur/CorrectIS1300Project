@@ -16,8 +16,6 @@ void Test_program(void);
 
 void Test_Leds(void);
 
-void Test_EventGroup(EventGroupHandle_t eventGroup);
-
 void Test_OLED(void);
 
 #endif /* INC_TEST_H_ */
